@@ -1,0 +1,18 @@
+{
+  "name": "WallpaperRnd",
+  "homepage": "https://github.com/Cyriaqu3/WallpaperRnD",
+  "authors": [
+    "Cyriaque DELAUNAY <cyriaquedelaunay@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
