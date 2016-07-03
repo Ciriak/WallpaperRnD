@@ -18,4 +18,8 @@ app.controller('screenCtrl', function($scope, $rootScope,$state,$http,$statePara
   }, function errorCallback(r) {
     console.log("Unable to communicate with the API");
   });
+
+  $scope.setWallpaper = function(uri){
+    $rootScope.ipc.emit("setWallpaper",uri);
+  }
 });

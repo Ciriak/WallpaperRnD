@@ -1,4 +1,8 @@
 const electron = require('electron');
+const wallpaper = require('wallpaper');
+var http = require('http');
+var fs = require('fs');
+var request = require('request')
 const {app} = require('electron');
 const Menu = electron.Menu;
 const BrowserWindow = electron.BrowserWindow;
@@ -92,8 +96,27 @@ app.on('ready', () => {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 700,
-    icon: __dirname + '/web/img/tgf/icon_circle.png'
+    icon: __dirname + '/web/img/ui/icon_black.png'
   });
 
   mainWindow.loadURL(`file://${__dirname}/web/index.html`);
 });
+
+ipc.on('setWallpaper', function (uri) {
+  console.log("Setting wallpaper...");
+  download(uri, 'image.jpg', function(){
+    wallpaper.set("image.jpg").then(() => {
+      console.log('Wallpaper set successfully');
+    });
+  });
+});
+
+
+var download = function(uri, filename, callback){
+  request.head(uri, function(err, res, body){
+    console.log('content-type:', res.headers['content-type']);
+    console.log('content-length:', res.headers['content-length']);
+
+    request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+  });
+};

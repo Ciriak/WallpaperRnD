@@ -9,6 +9,7 @@
   "author": "Cyriaque DELAUNAY",
   "license": "ISC",
   "dependencies": {
+    "request": "^2.72.0",
     "wallpaper": "^2.1.1"
   },
   "api": {

@@ -26,6 +26,7 @@ app.filter("trustUrl", ['$sce', function ($sce) { //used by media player
 app.controller('mainCtrl', ['$scope', '$http','$rootScope','$window','$state', function($scope, $http,$rootScope,$window,$state)
 {
   $rootScope.remote = require('electron').remote;
+  $rootScope.ipc = $rootScope.remote.ipcMain;
   $rootScope.appProps = require('../package.json');
   console.log($rootScope.appProps);
 

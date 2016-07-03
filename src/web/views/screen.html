@@ -5,7 +5,10 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-2" ng-repeat="wallpaper in wallpapers" style="background-image:url('{{wallpaper.cover.large_image_url}}'); height:100px; background-size:cover;">
+    <div class="col-md-2"
+      ng-repeat="wallpaper in wallpapers"
+      ng-click="setWallpaper(wallpaper.cover.large_image_url)"
+      style="background-image:url('{{wallpaper.cover.large_image_url}}'); height:100px; background-size:cover;">
     </div>
   </div>
 </div>
