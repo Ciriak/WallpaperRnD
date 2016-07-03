@@ -90,8 +90,8 @@ app.on('ready', () => {
   let displays = electron.screen.getAllDisplays();
   console.log(displays);
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 500,
+    width: 1200,
+    height: 700,
     icon: __dirname + '/web/img/tgf/icon_circle.png'
   });
 

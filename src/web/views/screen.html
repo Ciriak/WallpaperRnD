@@ -1,3 +1,11 @@
 <div class="container">
-  Hello world
+  <div class="row text-center">
+    <div class="col-md-3" ng-repeat="screen in screens">
+      {{screen.bounds.width}} X {{screen.bounds.height}}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-2" ng-repeat="wallpaper in wallpapers" style="background-image:url('{{wallpaper.cover.large_image_url}}'); height:100px; background-size:cover;">
+    </div>
+  </div>
 </div>
