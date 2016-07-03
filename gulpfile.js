@@ -54,7 +54,7 @@ gulp.task('scripts', function() {
     .pipe(plumber())
     .pipe(ngmin())
   	.pipe(uglify({mangle: false}))
-    .pipe(concat('tagifier.js'))
+    .pipe(concat('wallpaper.js'))
     .pipe(gulp.dest('./dist/web/js/'));
 });
 
@@ -97,7 +97,7 @@ gulp.task('copy-electron-components',function(){
 gulp.task('electron-build', function(callback) {
   var options = {
         dir: "./dist",
-        name: "tagifier",
+        name: "wallpaper",
         platform: "win32",
         arch: "x64",
         'app-version':pjson.version,
@@ -122,13 +122,13 @@ gulp.task('watch', function () {
 gulp.task('create-windows-installer',function(){
   del('./release/**/*');
   return resultPromise = winInstaller.createWindowsInstaller({
-    appDirectory: './build/tagifier-win32-x64',
+    appDirectory: './build/wallpaper-win32-x64',
     outputDirectory: './release',
     authors: 'Cyriaque DELAUNAY',
     setupIcon : './src/web/img/tgf/icon_setup.ico',
-    exe: 'Tagifier.exe',
+    exe: 'Wallpaper.exe',
     noMsi : true,
-    title : 'Tagifier'
+    title : 'Wallpaper'
   });
 
 resultPromise.then(() => console.log("It worked!"), (e) => console.log(`No dice: ${e.message}`));

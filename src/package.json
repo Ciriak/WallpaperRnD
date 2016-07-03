@@ -12,6 +12,6 @@
     "wallpaper": "^2.1.1"
   },
   "api": {
-    "url" : "https://www.artstation.com/projects.json"
+    "url": "https://www.artstation.com/projects.json"
   }
 }

@@ -80,9 +80,6 @@ function handleSquirrelEvent() {
   }
 };
 
-app.on('ready', function(){
-  createSplashScreen();
-});
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {
     app.quit()
@@ -90,111 +87,13 @@ app.on('window-all-closed', function () {
 });
 
 app.on('ready', () => {
-  const {protocol} = require('electron');
-  protocol.registerFileProtocol('tagifier', (request, callback) => {
-    console.log(request);
-    const url = request.url.substr(7);
-    callback({path: path.normalize(__dirname + '/' + url)});
-  }, (error) => {
-    if (error)
-      console.error('Failed to register protocol');
-  });
-});
-
-app.on('activate', function () {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (splashScreen === null) {
-    createWindow();
-  }
-});
-
-
-//
-// Create the splashscreen
-//
-// Also check for update -> Pre-render the app -> show the app
-
-function createSplashScreen () {
-  splashScreen = new BrowserWindow({
-    width: 300,
-    height: 300,
-    show:false,
-    resizable : false,
-    frame:false,
+  let displays = electron.screen.getAllDisplays();
+  console.log(displays);
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 500,
     icon: __dirname + '/web/img/tgf/icon_circle.png'
   });
 
-  splashScreen.loadURL(`file://${__dirname}/web/splash.html`);
-
-  splashScreen.once('ready-to-show', () => {
-    splashScreen.show();
-    splashScreen.webContents.send("tgf_version",{version:pjson.version});
-    splashScreen.webContents.send("splash_message",{message:"Checking for update..."});
-
-    //check for updates
-    let options = {
-      repo: 'Cyriaqu3/tagifier',
-      currentVersion: pjson.version
-    }
-
-    const updater = new GhReleases(options);
-
-    // Check for updates
-    // `status` returns true if there is a new update available
-    console.log("Looking for update");
-    updater.check((err, status) => {
-      if(err){
-        ipc.emit("splach_message",{message:err});
-        console.log(err);
-      }
-
-      if(status){
-        console.log("Status :");
-        console.log(status);
-      }
-
-      if (status) {
-        ipc.emit("splach_message",{message:"Downloading update..."});
-        // Download the update
-        updater.download();
-
-        //no update available, prepare the mainWindow
-      } else {
-        if(err){
-          splashScreen.webContents.send("splash_message",{message:err.message});
-        }
-
-        mainWindow = new BrowserWindow({
-          show:false,
-          width: 1024,
-          height: 600,
-          minWidth: 1024,
-          icon: __dirname + '/web/img/tgf/icon_circle.png'
-        });
-        mainWindow.loadURL(`file://${__dirname}/web/index.html`);
-        //display the main app and close the
-        mainWindow.once('ready-to-show', () => {
-          splashScreen.close();
-          mainWindow.show();
-          mainWindow.focus();
-        });
-      }
-    });
-
-    // When an update has been downloaded
-    updater.on('update-downloaded', (info) => {
-      ipc.emit("splach_message",{message:"Installing update..."});
-      // Restart the app and install the update
-      updater.install()
-    })
-
-    // Access electrons autoUpdater
-    updater.autoUpdater
-
-  });
-
-  splashScreen.on('closed', function () {
-    splashScreen = null
-  });
-}
+  mainWindow.loadURL(`file://${__dirname}/web/index.html`);
+});

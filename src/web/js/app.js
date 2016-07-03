@@ -1,10 +1,5 @@
-var app = angular.module('tagifier', [
+var app = angular.module('wallpaper', [
 'ui.router',
-'ui.bootstrap',
-'youtube-embed',
-'ngSanitize',
-'pascalprecht.translate',
-'cgNotify',
 'angular-electron'
     ]);
 
@@ -19,27 +14,8 @@ app.config(function($stateProvider, $urlRouterProvider) {
       url: "/",
       templateUrl: "views/index.html",
       reload:true
-    })
-    .state('about', {
-      url: "/about",
-      templateUrl: "views/about.html"
-    })
-    .state('file', {
-      url: "/{fileUrl:.*?}",
-      templateUrl: "views/file.html",
-      controller: "fileCtrl",
-      reload:true
     });
 });
-
-app.config(['$translateProvider', function($translateProvider) {
-  $translateProvider.useSanitizeValueStrategy('sanitize');
-  $translateProvider.useStaticFilesLoader({
-    prefix: 'locales/',
-    suffix: '.json'
-});
-  $translateProvider.preferredLanguage('en');
-}]);
 
 app.filter("trustUrl", ['$sce', function ($sce) { //used by media player
     return function (recordingUrl) {
@@ -47,7 +23,7 @@ app.filter("trustUrl", ['$sce', function ($sce) { //used by media player
     };
 }]);
 
-app.controller('mainCtrl', ['$scope', '$http','$rootScope','$translate','$window','$location','$state', function($scope, $http,$rootScope,$translate,$window,$location,$state)
+app.controller('mainCtrl', ['$scope', '$http','$rootScope','$window','$state', function($scope, $http,$rootScope,$window,$state)
 {
   $rootScope.remote = require('electron').remote;
 
