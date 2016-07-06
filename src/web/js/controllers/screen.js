@@ -19,7 +19,11 @@ app.controller('screenCtrl', function($scope, $rootScope,$state,$http,$statePara
     console.log("Unable to communicate with the API");
   });
 
-  $scope.setWallpaper = function(uri){
-    $rootScope.ipc.emit("setWallpaper",uri);
+  //index = screen index
+  $scope.setWallpaper = function(uri, index){
+    if(!index){
+      index = 0;
+    }
+    $rootScope.ipc.emit("setWallpaper",{uri : uri, screen : index});
   }
 });

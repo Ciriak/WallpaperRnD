@@ -2,7 +2,8 @@ const electron = require('electron');
 const wallpaper = require('wallpaper');
 var http = require('http');
 var fs = require('fs');
-var request = require('request')
+var request = require('request');
+var Jimp = require("jimp");
 const {app} = require('electron');
 const Menu = electron.Menu;
 const BrowserWindow = electron.BrowserWindow;
@@ -102,11 +103,20 @@ app.on('ready', () => {
   mainWindow.loadURL(`file://${__dirname}/web/index.html`);
 });
 
-ipc.on('setWallpaper', function (uri) {
-  console.log("Setting wallpaper...");
-  download(uri, 'image.jpg', function(){
-    wallpaper.set("image.jpg").then(() => {
-      console.log('Wallpaper set successfully');
+ipc.on('setWallpaper', function (data) {
+  initWallpaper(function(err){
+    if(err){
+      return;
+    }
+    processImage(data.uri, data.screen, function(err){
+      if(err){
+        return;
+      }
+      setWallpaper(function(success){
+        if(success){
+          console.log("done");
+        }
+      });
     });
   });
 });
@@ -119,4 +129,83 @@ var download = function(uri, filename, callback){
 
     request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
   });
+};
+
+
+//
+//  Generate a wallpaper empty template using the current screen config
+//
+var initWallpaper = function(callback){
+  var wallpaper = {
+    maxWidth : 0,
+    maxHeight: 0,
+    width: 0,
+    height : 0
+  };
+
+  let displays = electron.screen.getAllDisplays();
+  //set the max dimensions
+  for (var i = 0; i < displays.length; i++) {
+    if(displays[i].size.width > wallpaper.maxWidth){
+      wallpaper.maxWidth = displays[i].size.width;
+    }
+    if(displays[i].size.height > wallpaper.maxHeight){
+      wallpaper.maxHeight = displays[i].size.height;
+    }
+  }
+
+  //set the size
+  wallpaper.height = wallpaper.maxHeight;
+  for (var i = 0; i < displays.length; i++) {
+    wallpaper.width += displays[i].size.width;
+  }
+
+  //generate the empty template
+  var image = new Jimp(wallpaper.width, wallpaper.height, 0x000000, function (err, image) {
+    if(err){
+      console.log(err);
+      callback(err, null);
+    }
+    image.write( "wallpaper.jpg", function(){
+        console.log("Wallpaper template generated :");
+        console.log(wallpaper);
+    });
+    callback(null, "wallpaper.jpg");
+  });
+};
+
+var setWallpaper = function(callback){
+  wallpaper.set("wallpaper.jpg").then(() => {
+    callback(true);
+  });
+}
+
+//uri = path of the image
+//screen = index of the screen
+
+var processImage = function(uri, screen, callback){
+  let displays = electron.screen.getAllDisplays();
+  console.log("processing");
+  console.log(uri);
+  //retreive the wallpaper template
+  Jimp.read("wallpaper.jpg",function (err,wallpaper){
+    if(err){
+      console.log(err);
+      callback(err, null);
+    }
+    //load the image
+    Jimp.read(uri,function (err,image){
+      if(err){
+        console.log(err);
+        callback(err, null);
+      }
+      image.cover( displays[screen].size.width, displays[screen].size.height );
+      wallpaper.blit( image, 0 ,0 ).write("wallpaper.jpg",function(){
+        //return no error
+        callback(null);
+      });
+    });
+  });
+
+
 };
