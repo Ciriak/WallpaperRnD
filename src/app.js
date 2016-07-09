@@ -11,6 +11,7 @@ const GhReleases = require('electron-gh-releases');
 const ipc = electron.ipcMain;
 let splashScreen
 let mainWindow
+let displays
 //retreive package.json properties
 var pjson = require('./package.json');
 
@@ -92,8 +93,10 @@ app.on('window-all-closed', function () {
 });
 
 app.on('ready', () => {
-  let displays = electron.screen.getAllDisplays();
-  console.log(displays);
+
+  //retreive the screens and add aditionnal infos on the screens
+  displays = processDisplays(electron.screen.getAllDisplays());
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 700,
@@ -184,7 +187,6 @@ var setWallpaper = function(callback){
 //screen = index of the screen
 
 var processImage = function(uri, screen, callback){
-  let displays = electron.screen.getAllDisplays();
   console.log("processing");
   console.log(uri);
   //retreive the wallpaper template
@@ -199,13 +201,21 @@ var processImage = function(uri, screen, callback){
         console.log(err);
         callback(err, null);
       }
-      image.cover( displays[screen].size.width, displays[screen].size.height );
-      wallpaper.blit( image, 0 ,0 ).write("wallpaper.jpg",function(){
+      image.cover( displays[screen].size.width, displays[screen].size.width );
+      // move left the image depending of it index and the others screens size
+      wallpaper.blit( image, displays[screen].imageX ,0 ).write("wallpaper.jpg",function(){
         //return no error
         callback(null);
       });
     });
   });
-
-
 };
+
+function processDisplays(displays){
+  var globalX = 0;
+  for (var i = 0; i < displays.length; i++) {
+    displays[i].imageX = globalX;
+    globalX += displays[i].size.width;
+  }
+  return displays;
+}
