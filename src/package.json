@@ -9,6 +9,8 @@
   "author": "Cyriaque DELAUNAY",
   "license": "ISC",
   "dependencies": {
+    "async": "^2.0.0-rc.6",
+    "electron-json-storage": "^2.0.0",
     "request": "^2.72.0",
     "wallpaper": "^2.1.1"
   },

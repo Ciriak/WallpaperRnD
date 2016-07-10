@@ -4,14 +4,18 @@ var http = require('http');
 var fs = require('fs');
 var request = require('request');
 var Jimp = require("jimp");
+var async = require("async");
 const {app} = require('electron');
 const Menu = electron.Menu;
 const BrowserWindow = electron.BrowserWindow;
 const GhReleases = require('electron-gh-releases');
 const ipc = electron.ipcMain;
+const path = require('path');
+const storage = require('electron-json-storage');
 let splashScreen
 let mainWindow
 let displays
+let wallpapers
 //retreive package.json properties
 var pjson = require('./package.json');
 
@@ -30,7 +34,6 @@ function handleSquirrelEvent() {
   }
 
   const ChildProcess = require('child_process');
-  const path = require('path');
 
   const appFolder = path.resolve(process.execPath, '..');
   const rootAtomFolder = path.resolve(appFolder, '..');
@@ -97,6 +100,12 @@ app.on('ready', () => {
   //retreive the screens and add aditionnal infos on the screens
   displays = processDisplays(electron.screen.getAllDisplays());
 
+  //retreive the saved wallpapers
+  storage.get('wallpapers', function(error, data) {
+    if (error) throw error;
+    wallpapers = data;
+  });
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 700,
@@ -107,18 +116,24 @@ app.on('ready', () => {
 });
 
 ipc.on('setWallpaper', function (data) {
-  initWallpaper(function(err){
-    if(err){
-      return;
-    }
-    processImage(data.uri, data.screen, function(err){
+  //download the image locally
+  downloadImage(data,function(imagePath){
+    //init the wallpaper (and use the previously downloaded images)
+    initWallpaper(function(err){
       if(err){
         return;
       }
-      setWallpaper(function(success){
-        if(success){
-          console.log("done");
+      //add the image to the full wallpaper and save it locally
+      processImage(imagePath, data.screen, function(err){
+        if(err){
+          return;
         }
+        //set the new updated wallpaper
+        setWallpaper(function(success){
+          if(success){
+            console.log("done");
+          }
+        });
       });
     });
   });
@@ -139,41 +154,66 @@ var download = function(uri, filename, callback){
 //  Generate a wallpaper empty template using the current screen config
 //
 var initWallpaper = function(callback){
-  var wallpaper = {
-    maxWidth : 0,
-    maxHeight: 0,
-    width: 0,
-    height : 0
-  };
-
   let displays = electron.screen.getAllDisplays();
+  displays.maxHeight = 0;
+  displays.maxWidth = 0;
   //set the max dimensions
   for (var i = 0; i < displays.length; i++) {
-    if(displays[i].size.width > wallpaper.maxWidth){
-      wallpaper.maxWidth = displays[i].size.width;
+    if(displays[i].size.width > displays.maxWidth){
+      displays.maxWidth = displays[i].size.width;
     }
-    if(displays[i].size.height > wallpaper.maxHeight){
-      wallpaper.maxHeight = displays[i].size.height;
+    if(displays[i].size.height > displays.maxHeight){
+      displays.maxHeight = displays[i].size.height;
     }
   }
 
   //set the size
-  wallpaper.height = wallpaper.maxHeight;
+  wallpapers.height = displays.maxHeight;
   for (var i = 0; i < displays.length; i++) {
-    wallpaper.width += displays[i].size.width;
+    wallpapers.width += displays[i].size.width;
   }
 
   //generate the empty template
-  var image = new Jimp(wallpaper.width, wallpaper.height, 0x000000, function (err, image) {
+  console.log("displays");
+  console.log(wallpapers);
+  var image = new Jimp(wallpapers.width, wallpapers.height, 0x000000, function (err, image) {
     if(err){
       console.log(err);
-      callback(err, null);
+      return callback(err, null);
     }
     image.write( "wallpaper.jpg", function(){
         console.log("Wallpaper template generated :");
-        console.log(wallpaper);
     });
-    callback(null, "wallpaper.jpg");
+
+    //add previously added img to the template
+
+    if(wallpapers.screens){
+      console.log("Adding the previously added screens...");
+      // assuming openFiles is an array of file names
+      async.forEachOf(wallpapers.screens, function (process, index, cb) {
+
+          // Perform operation on file here.
+          console.log('Process for ' + process);
+          processImage(process.path, index, function(err){
+            if(err){
+              return cb(err);
+            }
+            return cb();
+          });
+
+      }, function(err) {
+          if( err ) {
+            console.log('A file failed to process');
+            callback(err, "wallpaper.jpg");
+          } else {
+            console.log('All files have been processed successfully');
+            callback(null, "wallpaper.jpg");
+          }
+      });
+    }else{
+      console.log("Empty template generated");
+      callback(null, "wallpaper.jpg");
+    }
   });
 };
 
@@ -187,6 +227,7 @@ var setWallpaper = function(callback){
 //screen = index of the screen
 
 var processImage = function(uri, screen, callback){
+
   console.log("processing");
   console.log(uri);
   //retreive the wallpaper template
@@ -199,7 +240,7 @@ var processImage = function(uri, screen, callback){
     Jimp.read(uri,function (err,image){
       if(err){
         console.log(err);
-        callback(err, null);
+        return callback(err, null);
       }
       image.cover( displays[screen].size.width, displays[screen].size.width );
       // move left the image depending of it index and the others screens size
@@ -218,4 +259,24 @@ function processDisplays(displays){
     globalX += displays[i].size.width;
   }
   return displays;
+}
+
+function downloadImage(data, callback){
+  var imagePath = "wallpaper"+data.screen+path.extname(data.uri);
+  download(data.uri,imagePath,function(){
+
+    //save the image path in localstorage
+    if(!wallpapers.screens){
+      wallpapers["screens"] = [];
+    }
+
+    wallpapers.screens[data.screen] = {
+      path : imagePath
+    }
+
+    storage.set('wallpapers', wallpapers, function(error) {
+      if (error) throw error;
+      callback(imagePath);
+    });
+  });
 }
